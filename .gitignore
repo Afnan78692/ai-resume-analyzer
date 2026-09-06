@@ -1,0 +1,14 @@
+.env
+.env.*
+**/.env
+**/.env.*
+
+Backend/.env
+Frontend/.env
+
+node_modules
+dist
+dist-ssr
+.vite
+*.log
+.DS_Store
