@@ -2,7 +2,7 @@ import axios from "axios"
 
 
 const api = axios.create({
-    baseURL: "https://ai-resume-analyzer-8o02.onrender.com/",
+    baseURL: "https://ai-resume-analyzer-8o02.onrender.com",
     withCredentials: true
 })
 
