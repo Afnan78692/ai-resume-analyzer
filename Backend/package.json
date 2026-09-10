@@ -1,15 +1,15 @@
 {
   "engines": {
-  "node": ">=22.0.0 <25.0.0"
-},
+    "node": ">=22.0.0 <25.0.0"
+  },
   "name": "yt_genai",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-  "dev": "npx nodemon server.js",
+    "dev": "npx nodemon server.js"
   },
   "keywords": [],
   "author": "",
