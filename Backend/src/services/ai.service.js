@@ -139,6 +139,85 @@ function normalizeInterviewReport(report) {
   };
 }
 
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getErrorStatus(error) {
+  return Number(
+    error?.status ??
+    error?.error?.code ??
+    error?.cause?.status ??
+    0
+  );
+}
+
+function isRetryableGeminiError(error) {
+  const status = getErrorStatus(error);
+
+  return [408, 429, 500, 502, 503, 504].includes(status);
+}
+
+async function generateWithModelFallback(client, prompt) {
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+  ];
+
+  let lastError;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        console.log(
+          `Gemini request: model=${model}, attempt=${attempt + 1}`
+        );
+
+        const response = await client.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+          },
+        });
+
+        console.log(`Gemini success: ${model}`);
+
+        return response;
+      } catch (error) {
+        lastError = error;
+
+        const status = getErrorStatus(error);
+
+        console.error(
+          `Gemini failed: model=${model}, attempt=${attempt + 1}, status=${status}`
+        );
+
+        if (!isRetryableGeminiError(error)) {
+          break;
+        }
+
+        if (attempt < 2) {
+          const delay =
+            1000 * Math.pow(2, attempt) +
+            Math.floor(Math.random() * 500);
+
+          console.log(`Retrying in ${delay}ms...`);
+
+          await sleep(delay);
+        }
+      }
+    }
+
+    console.log(`Falling back from ${model}`);
+  }
+
+  throw lastError || new Error("Gemini service unavailable");
+}
+
+
+
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
   const prompt = `
 Generate a detailed interview report as raw JSON only.
@@ -166,13 +245,10 @@ Job description:
 ${jobDescription}
 `;
 
-  const response = await getAiClient().models.generateContent({
-    model: "gemini-3.5-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-    },
-  });
+  const response = await generateWithModelFallback(
+    getAiClient(),
+    prompt
+);
 
   const text =
     response?.candidates?.[0]?.content?.parts
