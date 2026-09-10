@@ -1,4 +1,7 @@
 {
+  "engine":{
+    "node":"25.9.0"
+  },
   "name": "yt_genai",
   "version": "1.0.0",
   "description": "",
